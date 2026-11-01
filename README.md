@@ -6,6 +6,16 @@
 
 **在线体验**：https://missormosia.github.io/analgesic-decision-support/
 
+## 📸 界面预览 / Preview
+
+**1. 合规与安全拦截（强制警告）**
+*打开即触发，防止非专业人士误用，这是医疗产品的底线。*
+https://github.com/MissOrmosia/analgesic-decision-support/blob/main/Screenshot-1.png
+
+**2. 临床决策输出与预警**
+*针对晚期癌痛+不能口服的患者，系统给出的阶梯推荐及高危风险提示。*
+https://github.com/MissOrmosia/analgesic-decision-support/blob/main/Screenshot-2.png
+
 > 📝 **当前状态**：最终输出内容（用药方针）的措辞仍在进一步修订中，beta1.0 规则框架已冻结。
 
 **🇬🇧 [English version at the end ↓](#-english-version)**
@@ -85,6 +95,18 @@
 - 单文件 HTML + 原生 JavaScript，零依赖，手机浏览器可用；
 - 开发方式为 AI 辅助编程（vibe coding）：两个 AI 分别承担代码生成与代码评审/回归测试，作者本人作为调度者与最终裁决者，负责提出临床需求、验证医学正确性、裁决方案冲突。全部 102 条问题记录均由作者在真实场景中测试发现。
 
+## ⚠️ 局限性声明与生产环境展望
+
+**关于审计日志的架构说明**：当前版本为零依赖的单文件 HTML 演示，审计日志（`S.auditLog`）仅暂存于浏览器内存中，刷新即失。需要说明的是：会话内的日志机制本身是完整实现的——它验证的是"什么该记、何时记、如何校验"这套规则，而非存储方案。真实临床部署时，审计日志须持久化、防篡改（如仅追加写入的不可变存储），并满足合规留痕与导出要求，这需要后端服务与数据库支撑，已超出本演示的范围。
+
+**其他演示边界**：
+
+- 临床规则全部硬编码于前端，无法经后台动态配置；
+- 未接入医院内网鉴权（SSO / 工号登录），无法核验操作者真实身份；
+- 无真实患者数据流转，所有状态仅存在于当前页面会话中。
+
+**项目定位**：本项目的首要目的，是以交互原型的形式验证"临床红线应该设在哪里、如何拦截"——而非可直接上线的商业软件。
+
 ## 免责声明
 
 本工具所有输出须由具备处方权的专业人员结合患者实际情况审核确认。本项目不构成医疗建议，不替代专科会诊。作者不承担因使用本工具产生的任何责任。
@@ -104,6 +126,16 @@
 A guided, decision-tree-style analgesic prescribing assistant for frontline clinical use. Single-file HTML — open it and it runs.
 
 **Live demo**: https://missormosia.github.io/analgesic-decision-support/
+
+## 📸 Interface Preview
+
+**1. Compliance & Safety Interception (Mandatory Warning)**
+*Triggered upon opening to prevent misuse by non-professionals. This is the baseline for medical products.*
+https://github.com/MissOrmosia/analgesic-decision-support/blob/main/Screenshot-1.png
+
+**2. Clinical Decision Output & Warning**
+*The stepwise recommendation and high-risk alerts generated for an advanced cancer pain patient unable to take oral medication.*
+https://github.com/MissOrmosia/analgesic-decision-support/blob/main/Screenshot-2.png
 
 > 📝 **Status**: The wording of the final output content (medication policy) is still being refined; the beta1.0 rule framework is frozen.
 
@@ -182,6 +214,18 @@ Full changelog: [CHANGELOG.md](CHANGELOG.md).
 
 - Single-file HTML + vanilla JavaScript, zero dependencies, usable in mobile browsers;
 - Developed via vibe coding (AI-assisted programming): two AIs handle code generation and code review/regression testing respectively; the author acts as orchestrator and final arbiter, owning clinical requirements, medical validation, and conflict resolution. All 102 logged issues were discovered by the author through real-world testing.
+
+## ⚠️ Limitations & Production Outlook
+
+**Architectural note on the audit log**: This release is a zero-dependency, single-file HTML demo. The audit log (`S.auditLog`) lives in browser memory only and is lost on refresh. Note that the in-session logging mechanism itself is fully implemented — what it validates is *what should be logged, when, and how entries are validated*, not the storage layer. In a real clinical deployment, audit logs would require persistent, tamper-evident (e.g., append-only / WORM) storage with long-term retention and export capability per medical-compliance requirements — that means a backend service and database, which is deliberately out of scope for this demo.
+
+**Other demo boundaries**:
+
+- All clinical rules are hardcoded on the frontend and cannot be configured via a backend;
+- No hospital intranet authentication (SSO / staff-ID login), so the operator's real identity cannot be verified;
+- No real patient data flows through the tool; all state lives only in the current page session.
+
+**Project positioning**: The primary goal of this project is to validate, as an interactive prototype, *where clinical red lines should sit and how they should be enforced* — not to be production-ready commercial software.
 
 ## Disclaimer
 
