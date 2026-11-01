@@ -1,15 +1,14 @@
 # AI 止痛药助手
 
-**🇬🇧 [English version at the end ↓](#-english-version)**
-
 > 🚨 **WARNING**：本助手是一个可嵌入临床工作流的 AI 辅助决策工具，**仅供具备处方权的临床专业人士使用**。非医学专业人士请勿使用本工具进行自我诊断或自行开具药物；如有疼痛问题，请前往正规医疗机构就诊。作者不承担因使用本工具产生的任何责任。
 
 一个面向临床一线的引导式镇痛用药决策助手。单文件 HTML，打开即用。
 
-**在线体验**：（部署到 GitHub Pages 后在此填链接）
+**在线体验**：https://missormosia.github.io/analgesic-decision-support/
 
 > 📝 **当前状态**：最终输出内容（用药方针）的措辞仍在进一步修订中，beta1.0 规则框架已冻结。
 
+**🇬🇧 [English version at the end ↓](#-english-version)**
 ---
 
 ## 项目背景（简版）
@@ -104,7 +103,7 @@
 
 A guided, decision-tree-style analgesic prescribing assistant for frontline clinical use. Single-file HTML — open it and it runs.
 
-**Live demo**: (GitHub Pages link to be added after deployment)
+**Live demo**: https://missormosia.github.io/analgesic-decision-support/
 
 > 📝 **Status**: The wording of the final output content (medication policy) is still being refined; the beta1.0 rule framework is frozen.
 
