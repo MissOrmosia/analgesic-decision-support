@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 止痛药助手 · beta1.0</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#ffffff;
+    --primary:#2563eb; --primary-soft:#eef4ff;
+    --text:#1e293b; --muted:#64748b; --border:#e2e8f0;
+    --danger:#dc2626; --danger-soft:#fef2f2;
+    --warning:#d97706; --warning-soft:#fffbeb;
+    --neutral:#64748b; --neutral-soft:#f8fafc;
+    --success:#16a34a; --success-soft:#f0fdf4;
+    --info:#0369a1; --info-soft:#f0f9ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:24px;}
+  .app{width:100%;max-width:720px;background:var(--card);border-radius:16px;box-shadow:0 10px 40px rgba(15,23,42,.08);display:flex;flex-direction:column;max-height:90vh;overflow:hidden;}
+  .app-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#0ea5e9);display:flex;align-items:center;justify-content:center;color:#fff;font-size:19px;flex-shrink:0;}
+  .app-header h1{font-size:16px;font-weight:600;}
+  .app-header p{font-size:12px;color:var(--muted);margin-top:2px;}
+  .chat{flex:1;overflow-y:auto;padding:22px 24px 8px;display:flex;flex-direction:column;gap:14px;}
+  .msg{display:flex;gap:10px;max-width:92%;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .msg .bubble{padding:11px 15px;border-radius:12px;font-size:14px;line-height:1.7;white-space:pre-wrap;}
+  .msg.bot .bubble{background:var(--primary-soft);border-top-left-radius:4px;}
+  .msg.user{align-self:flex-end;flex-direction:row-reverse;}
+  .msg.user .bubble{background:var(--primary);color:#fff;border-top-right-radius:4px;}
+  .msg.bot.final .bubble{background:var(--success-soft);border-left:3px solid var(--success);}
+  .msg.bot.warning .bubble{background:var(--warning-soft);border-left:3px solid var(--warning);}
+  .msg.bot.danger .bubble{background:var(--danger-soft);border-left:3px solid var(--danger);}
+  .msg.bot.info .bubble{background:var(--info-soft);border-left:3px solid var(--info);}
+  .avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+  .msg.bot .avatar{background:#dbeafe;color:#1d4ed8;}
+  .msg.user .avatar{background:#e0e7ff;color:#4338ca;}
+  .options{padding:8px 24px 20px;display:flex;flex-direction:column;gap:10px;flex-shrink:0;}
+  .opt{text-align:left;background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:13px 16px;cursor:pointer;transition:.15s;font-family:inherit;display:flex;align-items:center;gap:12px;}
+  .opt:hover{border-color:var(--primary);background:#f8fbff;transform:translateY(-1px);}
+  .opt .key{width:24px;height:24px;border-radius:6px;background:#f1f5f9;color:var(--muted);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .opt:hover .key{background:var(--primary);color:#fff;}
+  .opt .label{font-size:14px;font-weight:600;color:var(--text);display:block;}
+  .opt .hint{font-size:12px;color:var(--muted);margin-top:3px;display:block;}
+  .nav-row{display:flex;gap:10px;padding:0 24px 20px;flex-shrink:0;}
+  .nav-btn{flex:1;border:1.5px dashed var(--border);background:#fff;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);transition:.15s;}
+  .nav-btn:hover{border-color:var(--primary);color:var(--primary);background:#f8fbff;}
+  .nav-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .footer{padding:11px 24px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);display:flex;justify-content:space-between;flex-shrink:0;}
+  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:1000;padding:24px;}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:540px;box-shadow:0 20px 60px rgba(15,23,42,.3);overflow:hidden;animation:fade .2s ease;max-height:90vh;display:flex;flex-direction:column;}
+  .modal-header{padding:16px 20px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .modal-header.danger{background:var(--danger-soft);color:var(--danger);border-bottom:1px solid #fecaca;}
+  .modal-header.warning{background:var(--warning-soft);color:var(--warning);border-bottom:1px solid #fde68a;}
+  .modal-header.neutral{background:#eff6ff;color:var(--primary);border-bottom:1px solid #bfdbfe;}
+  .modal-header.info{background:var(--info-soft);color:var(--info);border-bottom:1px solid #bae6fd;}
+  .modal-header.success{background:var(--success-soft);color:var(--success);border-bottom:1px solid #bbf7d0;}
+  .modal-body{padding:20px;font-size:14px;line-height:1.7;color:var(--text);overflow-y:auto;flex:1;}
+  .modal-footer{padding:12px 20px 18px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+  .modal-footer button{border:none;border-radius:8px;padding:9px 22px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;}
+  .modal-footer button.danger{background:var(--danger);color:#fff;}
+  .modal-footer button.warning{background:var(--warning);color:#fff;}
+  .modal-footer button.success{background:var(--success);color:#fff;}
+  .modal-footer button.info{background:var(--info);color:#fff;}
+  .modal-footer button.neutral{background:#e2e8f0;color:var(--text);}
+  .screen-options{padding:8px 20px 20px;display:flex;flex-direction:column;gap:10px;}
+  .screen-btn{text-align:left;border-radius:12px;padding:13px 16px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;display:flex;align-items:center;gap:12px;border:1.5px solid transparent;transition:.15s;}
+  .screen-btn .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .screen-btn.danger{background:var(--danger-soft);border-color:#fecaca;color:var(--danger);}
+  .screen-btn.danger .dot{background:var(--danger);}
+  .screen-btn.warning{background:var(--warning-soft);border-color:#fde68a;color:var(--warning);}
+  .screen-btn.warning .dot{background:var(--warning);}
+  .screen-btn.info{background:var(--info-soft);border-color:#bae6fd;color:var(--info);}
+  .screen-btn.info .dot{background:var(--info);}
+  .screen-btn.success{background:var(--success-soft);border-color:#bbf7d0;color:var(--success);}
+  .screen-btn.success .dot{background:var(--success);}
+  .screen-btn.neutral{background:var(--neutral-soft);border-color:var(--border);color:var(--text);}
+  .screen-btn.neutral .dot{background:var(--neutral);}
+  .red-bold{color:#dc2626;font-weight:700;}
+  .bubble strong{font-weight:700;}
+  .form-group{margin-bottom:12px;}
+  .form-group label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px;}
+  .form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div class="logo">✚</div>
+    <div><h1>AI 止痛药助手 · beta1.0</h1><p>引导式决策 · 仅供专业参考，最终由医生确认</p></div>
+  </div>
+  <div class="chat" id="chat"></div>
+  <div class="options" id="options"></div>
+  <div class="nav-row" id="navRow" style="display:none;">
+    <button class="nav-btn" id="btnBack" onclick="goBack()">↩ 返回上一步</button>
+    <button class="nav-btn" id="btnHome" onclick="goHome()">↺ 返回初始界面</button>
+  </div>
+  <div class="footer"><span>规则版本 beta1.0 · 第二轮完成（含问题 103）</span><span id="stepInfo">步骤 1</span></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header" id="modalTitle">⚠️ 警示</div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   全局状态（问题 77：S.renalAction 初始化）
+   ============================================================ */
+const S = {
+  scene: null,
+  ageGroup: null,
+  childAgeExact: null,
+  renalStatus: null,
+  renalLayer: null,
+  renalAction: null,       // 已初始化
+  nsaidStatus: null,
+  ulcerActivity: null,
+  overrideCache: { reason: '', consulted: false },
+  auditLog: [],
+  stepCount: 1,
+};
+
+/* ============================================================
+   历史栈（问题 70/76/84 重构）
+   ------------------------------------------------------------
+   保存 state + chatHTML + optionsHTML + handlersSnapshot
+   goBack 只恢复快照，不再调用屏幕函数
+   ============================================================ */
+let historyStack = [];
+let optionHandlers = {};   // 当前屏幕的选项处理器注册表
+let isRestoringHistory = false;
+
+function snapshotState() {
+  return {
+    scene: S.scene, ageGroup: S.ageGroup, childAgeExact: S.childAgeExact,
+    renalStatus: S.renalStatus, renalLayer: S.renalLayer, renalAction: S.renalAction,
+    nsaidStatus: S.nsaidStatus, ulcerActivity: S.ulcerActivity,
+    stepCount: S.stepCount,
+  };
+}
+
+/* 每次主聊天区渲染完选项后，capture 当前屏幕作为历史栈的一个节点 */
+function captureCurrentScreen() {
+  if (isRestoringHistory) return;
+  historyStack.push({
+    state: JSON.parse(JSON.stringify(snapshotState())),
+    chatHTML: chatEl.innerHTML,
+    optionsHTML: optionsEl.innerHTML,
+    handlersSnapshot: Object.assign({}, optionHandlers),
+    stepInfoText: stepInfo.textContent,
+  });
+  if (historyStack.length > 30) historyStack.shift();
+  updateNavButtons();
+}
+
+/* 终点屏（无选项、只有推荐结果的屏幕）收尾：清空选项并 capture，
+   保证 goBack 能正确弹掉终点屏、回到上一个可交互屏幕（问题 94 补丁） */
+function finishScreen() {
+  clearOptions();
+  updateNavButtons();
+  captureCurrentScreen();
+}
+
+/* 恢复到快照 */
+function restoreScreen(snap) {
+  isRestoringHistory = true;
+  Object.assign(S, snap.state);
+  chatEl.innerHTML = snap.chatHTML;
+  optionsEl.innerHTML = snap.optionsHTML;
+  optionHandlers = Object.assign({}, snap.handlersSnapshot);
+  optionsEl.querySelectorAll('[data-opt-id]').forEach(btn => {
+    const id = btn.getAttribute('data-opt-id');
+    btn.onclick = () => {
+      if (optionHandlers[id]) optionHandlers[id]();
+    };
+  });
+  stepInfo.textContent = snap.stepInfoText;
+  isRestoringHistory = false;
+}
+
+/* 返回上一步：弹出当前屏幕（栈顶），恢复到新栈顶。
+   若新栈顶是无选项的终点屏快照，则继续下弹，
+   直到恢复到“有选项可点”的屏幕，避免回到死屏（问题 94 补丁） */
+function goBack() {
+  if (historyStack.length < 2) return;
+  closeModal();
+  historyStack.pop();
+  while (historyStack.length > 1) {
+    const top = historyStack[historyStack.length - 1];
+    if (top.optionsHTML && top.optionsHTML.indexOf('data-opt-id') !== -1) break;
+    historyStack.pop();
+  }
+  restoreScreen(historyStack[historyStack.length - 1]);
+  updateNavButtons();
+}
+
+function goHome() {
+  historyStack = [];
+  optionHandlers = {};
+  resetAll();
+}
+
+function updateNavButtons() {
+  const navRow = document.getElementById('navRow');
+  const btnBack = document.getElementById('btnBack');
+  if (historyStack.length > 0 || S.scene !== null) {
+    navRow.style.display = 'flex';
+  } else {
+    navRow.style.display = 'none';
+  }
+  btnBack.disabled = historyStack.length < 2;
+}
+
+/* ============================================================
+   DOM
+   ============================================================ */
+const chatEl = document.getElementById('chat');
+const optionsEl = document.getElementById('options');
+const stepInfo = document.getElementById('stepInfo');
+const modalOverlay = document.getElementById('modalOverlay');
+const modalTitle = document.getElementById('modalTitle');
+const modalBody = document.getElementById('modalBody');
+const modalFooter = document.getElementById('modalFooter');
+
+/* ============================================================
+   问题 87/88/90：小儿用药边界统一判定
+   ------------------------------------------------------------
+   满足以下任一条件 → 强制会诊，不输出任何药物：
+   · < 2 岁
+   · 合并胃十二指肠溃疡
+   · 合并炎症性肠病（克罗恩病 / 溃疡性结肠炎）
+   · 肾功能不全（含轻度）
+   白名单：右旋布洛芬、对乙酰氨基酚、曲马多（>12）、间苯三酚（>2）
+   ============================================================ */
+function checkChildBoundary() {
+  if (S.ageGroup !== 'child') return null;
+  const age = S.childAgeExact;
+  if (age < 2) return { dept: '儿科', reason: '＜2 岁，所有镇痛药物适应症未确立' };
+  if (S.nsaidStatus === 'ulcer') return { dept: '儿科 + 消化内科', reason: '合并胃十二指肠溃疡，NSAIDs 禁用' };
+  if (S.nsaidStatus === 'ibd') return { dept: '儿科 + 消化内科', reason: '合并炎症性肠病，NSAIDs 不建议使用' };
+  // 防御性：小儿 + 任意肾损已由 applyRenalWarning 提前拦截并强制会诊（问题 103），
+  // 此处保留作为兜底（若未来 applyRenalWarning 逻辑调整，仍能触发）
+  if (S.renalLayer && S.renalLayer !== 'normal') return { dept: '儿科 + 肾内科', reason: '合并肾功能不全（' + layerLabel(S.renalLayer) + '）' };
+  return null;
+}
+
+/* ============================================================
+   初始警示：仅限专业人士使用（GitHub 公开版必加）
+   ============================================================ */
+let disclaimerShown = false;
+function showInitialDisclaimer() {
+  if (disclaimerShown) return;
+  disclaimerShown = true;
+  showModal('🛑 使用限制声明',
+    '<p style="font-size:14px;line-height:1.8;">本助手<strong>仅供临床医生 / 临床药师</strong>作为镇痛用药的辅助决策参考，所有输出均须由具备处方权的专业人员结合患者实际情况审核确认后方可执行。</p>' +
+    '<p style="margin-top:12px;font-size:14px;line-height:1.8;color:#dc2626;font-weight:700;">非医学专业人士请勿使用本助手进行任何自行用药决策。</p>' +
+    '<p style="margin-top:12px;font-size:14px;line-height:1.8;">如您是普通患者或家属，请立即前往医疗机构就诊，寻求专业医师 / 药师帮助。</p>',
+    'danger',
+    [
+      { text: '我是普通用户，退出', class: 'neutral', onClick: () => {
+        modalBody.innerHTML = '<p style="font-size:14px;line-height:1.8;text-align:center;padding:20px 0;">请前往正规医疗机构就诊。<br>如需重新进入，请刷新页面。</p>';
+        modalFooter.style.display = 'none';
+      }},
+      { text: '我是临床专业人士，进入使用', class: 'danger', onClick: () => closeModal() },
+    ]
+  );
+}
+/* ============================================================
+   基础工具
+   ============================================================ */
+function addMessage(role, text, style, useHtml) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + role + (style ? ' ' + style : '');
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = role === 'bot' ? 'AI' : '医';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  const autoHtml = useHtml === undefined ? /<[a-z][\s\S]*>/i.test(text) : useHtml;
+  if (autoHtml) bubble.innerHTML = text; else bubble.textContent = text;
+  wrap.appendChild(avatar);
+  wrap.appendChild(bubble);
+  chatEl.appendChild(wrap);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function clearOptions() {
+  optionsEl.innerHTML = '';
+  optionHandlers = {};
+}
+
+/* 主聊天区选项：注册处理器 + data-opt-id（问题 70/76 重构核心） */
+function renderOptions(options, onPick, showRestart) {
+  clearOptions();
+  options.forEach((opt, i) => {
+    const handlerKey = 'k_' + i;
+    optionHandlers[handlerKey] = () => onPick(opt);
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.setAttribute('data-opt-id', handlerKey);
+    btn.innerHTML = '<span class="key">' + (i + 1) + '</span>' +
+      '<span><span class="label">' + opt.label + '</span>' +
+      (opt.hint ? '<span class="hint">' + opt.hint + '</span>' : '') + '</span>';
+    btn.onclick = () => { if (optionHandlers[handlerKey]) optionHandlers[handlerKey](); };
+    optionsEl.appendChild(btn);
+  });
+  stepInfo.textContent = '步骤 ' + S.stepCount;
+  // 主聊天区渲染完选项后，自动 capture 当前屏幕（问题 94 方案 A）
+  captureCurrentScreen();
+}
+
+function resetAll() {
+  S.scene = null; S.ageGroup = null; S.childAgeExact = null;
+  S.renalStatus = null; S.renalLayer = null; S.renalAction = null;
+  S.nsaidStatus = null; S.ulcerActivity = null;
+  S.overrideCache = { reason: '', consulted: false };
+  S.stepCount = 1;
+  historyStack = [];
+  optionHandlers = {};
+  chatEl.innerHTML = '';
+  clearOptions();
+  closeModal();
+  updateNavButtons();
+  start();
+}
+
+function closeModal() {
+  modalOverlay.style.display = 'none';
+  const old = modalOverlay.querySelector('.screen-options');
+  if (old) old.remove();
+}
+
+/* ============================================================
+   通用弹窗（弹窗不参与历史栈）
+   ============================================================ */
+function showModal(title, bodyHtml, headerClass, footerButtons) {
+  modalTitle.className = 'modal-header ' + (headerClass || 'neutral');
+  modalTitle.textContent = title;
+  modalBody.innerHTML = bodyHtml;
+  modalFooter.innerHTML = '';
+  modalFooter.style.display = 'flex';
+  (footerButtons || []).forEach(cfg => {
+    const btn = document.createElement('button');
+    btn.className = cfg.class || 'neutral';
+    btn.textContent = cfg.text;
+    btn.onclick = cfg.onClick;
+    modalFooter.appendChild(btn);
+  });
+  const old = modalOverlay.querySelector('.screen-options');
+  if (old) old.remove();
+  modalOverlay.style.display = 'flex';
+}
+
+function showScreenOptions(title, bodyHtml, headerClass, options, onPick) {
+  modalTitle.className = 'modal-header ' + (headerClass || 'neutral');
+  modalTitle.textContent = title;
+  modalBody.innerHTML = bodyHtml;
+  modalFooter.innerHTML = '';
+  modalFooter.style.display = 'none';
+  const old = modalOverlay.querySelector('.screen-options');
+  if (old) old.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'screen-options';
+
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'screen-btn ' + (opt.class || 'neutral');
+    btn.innerHTML = '<span class="dot"></span>' + opt.label;
+    btn.onclick = () => { wrap.remove(); closeModal(); onPick(opt); };
+    wrap.appendChild(btn);
+  });
+
+  const header = modalOverlay.querySelector('.modal-header');
+  header.after(wrap);
+  modalOverlay.style.display = 'flex';
+}
+
+/* ============================================================
+   理由校验
+   ============================================================ */
+function isValidClinicalReason(text) {
+  const chinese = (text.match(/[\u4e00-\u9fa5]/g) || []);
+  if (chinese.length < 5) return { ok: false, msg: '汉字数量不足（至少5个）' };
+  if (new Set(chinese).size < 3) return { ok: false, msg: '理由缺乏实际临床信息（汉字重复度过高）' };
+  if (/(.)\1{3,}/.test(text)) return { ok: false, msg: '检测到连续重复字符' };
+  return { ok: true };
+}
+
+/* ============================================================
+   强制会诊
+   ============================================================ */
+function forceConsult(title, bodyHtml, deptLabel, contextKey) {
+  modalTitle.className = 'modal-header danger';
+  modalTitle.textContent = title;
+  modalBody.innerHTML = bodyHtml;
+  modalFooter.innerHTML = '';
+  modalFooter.style.display = 'none';
+  const old = modalOverlay.querySelector('.screen-options');
+  if (old) old.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'screen-options';
+
+  const btnConsulted = document.createElement('button');
+  btnConsulted.className = 'screen-btn success';
+  btnConsulted.innerHTML = '<span class="dot"></span>已联系' + deptLabel + '会诊';
+  btnConsulted.onclick = () => {
+    S.auditLog.push({ action: 'force_consult', dept: deptLabel, status: 'consulted', scene: contextKey, ts: new Date().toISOString() });
+    wrap.remove(); closeModal();
+    addMessage('bot', '✅ 已确认会诊。\n\n请严格按专科指导用药。本助手不再提供具体药物推荐。', 'warning');
+    finishScreen();
+  };
+  wrap.appendChild(btnConsulted);
+
+  const btnRefused = document.createElement('button');
+  btnRefused.className = 'screen-btn neutral';
+  btnRefused.innerHTML = '<span class="dot"></span>后续联系，暂不开具';
+  btnRefused.onclick = () => {
+    S.auditLog.push({ action: 'force_consult', dept: deptLabel, status: 'refused', scene: contextKey, ts: new Date().toISOString() });
+    wrap.remove(); closeModal();
+    addMessage('bot', '已选择暂不开具，回退到初始界面。', 'warning');
+    setTimeout(() => resetAll(), 800);
+  };
+  wrap.appendChild(btnRefused);
+
+  const header = modalOverlay.querySelector('.modal-header');
+  header.after(wrap);
+  modalOverlay.style.display = 'flex';
+}
+
+/* ============================================================
+   会诊确认（非强制）
+   ============================================================ */
+function askConsultConfirm(title, bodyHtml, deptLabel, contextKey, onDone) {
+  modalTitle.className = 'modal-header warning';
+  modalTitle.textContent = title;
+  modalBody.innerHTML = bodyHtml;
+  modalFooter.innerHTML = '';
+  modalFooter.style.display = 'none';
+  const old = modalOverlay.querySelector('.screen-options');
+  if (old) old.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'screen-options';
+
+  const mk = (cls, text, cb) => {
+    const b = document.createElement('button');
+    b.className = 'screen-btn ' + cls;
+    b.innerHTML = '<span class="dot"></span>' + text;
+    b.onclick = () => { wrap.remove(); closeModal(); cb(); };
+    return b;
+  };
+
+  wrap.appendChild(mk('success', '已联系' + deptLabel + '会诊', () => {
+    S.auditLog.push({ action: 'consult', dept: deptLabel, status: 'consulted', scene: contextKey, ts: new Date().toISOString() });
+    onDone('consulted');
+  }));
+  wrap.appendChild(mk('warning', '暂未会诊，稍后安排', () => {
+    S.auditLog.push({ action: 'consult', dept: deptLabel, status: 'pending', scene: contextKey, ts: new Date().toISOString() });
+    onDone('pending');
+  }));
+  wrap.appendChild(mk('danger', '暂不计划会诊', () => {
+    showModal('⚠️ 拒绝会诊确认',
+      '<p style="font-size:14px;line-height:1.7;">您选择暂不计划' + deptLabel + '会诊。请填写原因：</p>' +
+      '<textarea id="refuseReason" placeholder="请填写拒绝会诊的临床理由（至少5个汉字）..." style="width:100%;height:70px;margin-top:12px;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;outline:none;"></textarea>',
+      'danger',
+      [
+        { text: '返回重新选择', class: 'neutral', onClick: () => {
+          closeModal();
+          askConsultConfirm(title, bodyHtml, deptLabel, contextKey, onDone);
+        } },
+        { text: '确认拒绝并继续', class: 'danger', onClick: () => {
+          const r = document.getElementById('refuseReason').value.trim();
+          const check = isValidClinicalReason(r);
+          if (!check.ok) { alert('请填写有效理由：' + check.msg); return; }
+          const ts = new Date().toISOString();
+          S.auditLog.push({ action: 'refuse_consult_reason', reason: r, dept: deptLabel, ts });
+          closeModal();
+          // 问题 100：提交成功回执（用 showModal 而非 addMessage，不触发 capture，避免重复快照）
+          showModal('✅ 已提交',
+            '<p style="font-size:14px;line-height:1.7;">拒绝会诊理由已记录至审计日志。</p>' +
+            '<p style="margin-top:8px;font-size:13px;color:#64748b;">时间：' + ts + '</p>' +
+            '<p style="margin-top:8px;font-size:13px;color:#64748b;">科室：' + deptLabel + '</p>' +
+            '<p style="margin-top:8px;font-size:13px;color:#64748b;">标记：refuse_consult_reason</p>',
+            'success',
+            [{ text: '我知道了', class: 'success', onClick: () => { closeModal(); onDone('refused'); } }]
+          );
+        }}
+      ]
+    );
+  }));
+
+  const header = modalOverlay.querySelector('.modal-header');
+  header.after(wrap);
+  modalOverlay.style.display = 'flex';
+}
+
+/* ============================================================
+   NSAIDs 禁忌筛查（问题 91：改用 id 判断）
+   ============================================================ */
+function askNsaidScreening(onDone) {
+  showScreenOptions(
+    '⚠️ NSAIDs 用药前确认',
+    '<p style="font-size:14px;">请问患者是否合并以下疾病？</p>',
+    'info',
+    [
+      { id: 'ulcer', class: 'danger', label: '胃十二指肠溃疡' },
+      { id: 'ibd', class: 'warning', label: '炎症性肠病（克罗恩病 / 溃疡性结肠炎）' },
+      { id: 'none', class: 'neutral', label: '无上述疾病，继续评估' },
+    ],
+    (opt) => {
+      if (opt.id === 'ulcer') {
+        S.nsaidStatus = 'ulcer';
+        showModal('🚫 禁用 NSAIDs',
+          '<p>患者合并胃十二指肠溃疡，使用 NSAIDs 存在消化道出血、穿孔风险。</p><br>' +
+          '<p><strong>NSAIDs 药物说明书明确提示：胃肠道溃疡患者禁用。</strong></p><br>' +
+          '<p>本助手后续推荐将自动避开 NSAIDs。</p>',
+          'danger',
+          [{ text: '我知道了', class: 'danger', onClick: () => { closeModal(); onDone(); } }]
+        );
+      } else if (opt.id === 'ibd') {
+        S.nsaidStatus = 'ibd';
+        showModal('⚠️ 炎症性肠病患者 NSAIDs 使用警示',
+          '<p>循证医学证据显示：</p>' +
+          '<p>· <strong>克罗恩病</strong>患者 NSAIDs 相关住院风险增加，建议避免。</p>' +
+          '<p>· <strong>溃疡性结肠炎</strong>患者风险证据不一致，病情稳定者可在严密监测下短期使用。</p><br>' +
+          '<p>本助手后续推荐将避开 NSAIDs。</p>',
+          'warning',
+          [{ text: '我知道了', class: 'warning', onClick: () => { closeModal(); onDone(); } }]
+        );
+      } else {
+        S.nsaidStatus = 'none';
+        onDone();
+      }
+    }
+  );
+}
+
+function askUlcerActivity(onDone) {
+  showScreenOptions(
+    '🔍 溃疡状态确认',
+    '<p style="font-size:14px;">患者胃十二指肠溃疡目前是：</p>',
+    'info',
+    [
+      { id: 'active', class: 'danger', label: '活动性溃疡' },
+      { id: 'history', class: 'warning', label: '已愈合（有溃疡病史）' },
+    ],
+    (opt) => {
+      S.ulcerActivity = opt.id;
+      onDone();
+    }
+  );
+}
+
+/* ============================================================
+   小儿精确年龄输入
+   ============================================================ */
+function askChildAgeExact(onDone) {
+  showModal('👶 请输入患儿年龄',
+    '<p style="font-size:14px;line-height:1.7;">请填写患儿具体年龄（岁），AI 将根据年龄自动匹配可用药物和剂型。</p>' +
+    '<p style="margin-top:8px;font-size:13px;color:#64748b;">例如：3 或 8.5（可填小数）</p>' +
+    '<div class="form-group" style="margin-top:12px;"><label>年龄（岁）</label><input type="number" id="childAgeInput" placeholder="0-17.99" step="0.01" min="0" max="17.99"></div>',
+    'info',
+    [
+      { text: '确认', class: 'info', onClick: () => {
+        const v = parseFloat(document.getElementById('childAgeInput').value);
+        if (isNaN(v) || v < 0 || v >= 18) { alert('请输入 0 到 17.99 之间的年龄。'); return; }
+        S.childAgeExact = v;
+        S.auditLog.push({ action: 'child_age', value: v, ts: new Date().toISOString() });
+        closeModal();
+        addMessage('bot', '已记录患儿年龄：<strong>' + v + ' 岁</strong>', 'info', true);
+        onDone();
+      }}
+    ]
+  );
+}
+
+/* ============================================================
+   肾功能筛查（问题 91：改用 id 判断）
+   ============================================================ */
+function askRenalScreen(onDone) {
+  showScreenOptions(
+    '🩺 肾功能评估（全局必经）',
+    '<p style="font-size:14px;">请确认患者肾功能指标（尿素氮 / 肌酐）是否有异常？</p>' +
+    '<p style="margin-top:8px;font-size:13px;color:#64748b;">如化验单上有血清肌酐（Scr），可进入手动输入由 AI 计算 CLcr。</p>',
+    'info',
+    [
+      { id: 'normal', class: 'success', label: '无异常 / 未查及明显异常' },
+      { id: 'abnormal', class: 'warning', label: '有异常 / 不确定' },
+      { id: 'unchecked', class: 'neutral', label: '暂未查肾功能' },
+    ],
+    (opt) => {
+      if (opt.id === 'normal') {
+        S.renalStatus = 'normal';
+        S.renalLayer = 'normal';
+        onDone();
+      } else if (opt.id === 'abnormal') {
+        S.renalStatus = 'abnormal';
+        askRenalLayer(onDone);
+      } else {
+        S.renalStatus = 'unchecked';
+        handleRenalUnchecked(onDone);
+      }
+    }
+  );
+}
+
+function handleRenalUnchecked(onDone) {
+  if (S.ageGroup === 'child') {
+    showModal('🚫 儿童肾功能未查，必须完善检查',
+      '<p style="font-size:14px;line-height:1.7;">患儿肾功能状态未知，使用任何镇痛药物均存在剂量不当及肾损伤风险。</p>' +
+      '<p style="margin-top:12px;font-size:14px;font-weight:700;color:#dc2626;">必须完善肾功能检查后方可继续。</p>',
+      'danger',
+      [
+        { text: '返回，完善肾功能后再评估', class: 'warning', onClick: () => {
+          S.renalAction = 'returned_to_check';
+          S.auditLog.push({ action: 'renal', status: 'returned_child', ts: new Date().toISOString() });
+          closeModal();
+          askRenalScreen(onDone);
+        }},
+        { text: '已联系肾内科会诊，按专科指导用药', class: 'danger', onClick: () => {
+          S.renalAction = 'consulted_without_check';
+          S.auditLog.push({ action: 'renal', status: 'consulted_without_check_child', ts: new Date().toISOString() });
+          closeModal();
+          addMessage('bot', '✅ 已确认肾内科会诊。请严格按肾内科专科指导用药，本助手不再推荐具体药物。', 'warning');
+          finishScreen();
+        }},
+      ]
+    );
+    return;
+  }
+  showModal('⚠️ 肾功能未查，用药需谨慎',
+    '<p style="font-size:14px;line-height:1.7;">未查肾功能时，部分止痛药（如 NSAIDs、阿片类、加巴喷丁 / 普瑞巴林等）无法准确评估禁忌和剂量。</p>' +
+    '<p style="margin-top:8px;font-size:14px;">请选择：</p>',
+    'warning',
+    [
+      { text: '返回，完善肾功能后再评估', class: 'warning', onClick: () => {
+        S.renalAction = 'returned_to_check';
+        S.auditLog.push({ action: 'renal', status: 'returned', ts: new Date().toISOString() });
+        closeModal();
+        askRenalScreen(onDone);
+      }},
+      { text: '已知晓风险，继续评估', class: 'neutral', onClick: () => {
+        S.renalAction = 'continued_without_check';
+        S.auditLog.push({ action: 'renal', status: 'continued_without_check', ts: new Date().toISOString() });
+        closeModal();
+        addMessage('bot', '📋 已记录：医生已知晓“肾功能未查”的风险，并选择继续评估。该操作已记录至审计日志。', 'info');
+        onDone();
+      }},
+    ]
+  );
+}
+
+function askRenalLayer(onDone) {
+  showScreenOptions(
+    '🔍 肾功能分层（已确认异常）',
+    '<p style="font-size:14px;">请选择患者的肾功能分层，或手动输入指标计算：</p>' +
+    '<p style="font-size:12px;color:#94a3b8;margin-top:6px;">若复查后实际正常，请手动输入 Scr 由 AI 重新计算。</p>',
+    'info',
+    [
+      // 问题 99：已确认“有异常”，不再提供“正常”快捷选项；
+      // 若实际正常，可走手动输入，按 Scr 计算结果自动匹配
+      { id: 'mild', class: 'info', label: '轻度不全（CLcr 60-89 mL/min）' },
+      { id: 'moderate', class: 'info', label: '中度不全（CLcr 30-59 mL/min）' },
+      { id: 'severe', class: 'warning', label: '重度不全（CLcr 15-29 mL/min）' },
+      { id: 'extreme', class: 'danger', label: '极重度不全 / 肾衰竭（CLcr < 15 mL/min）' },
+      { id: 'manual', class: 'neutral', label: '手动输入肾功能指标（AI 自动计算）' },
+    ],
+    (opt) => {
+      if (opt.id === 'manual') {
+        showRenalManualForm((result) => {
+          S.renalLayer = result.layer;
+          S.renalClcr = result.clcr;
+          S.auditLog.push({ action: 'renal', layer: result.layer, clcr: result.clcr, ts: new Date().toISOString() });
+          applyRenalWarning(result.layer, onDone);
+        });
+        return;
+      }
+      S.renalLayer = opt.id;
+      S.auditLog.push({ action: 'renal', layer: opt.id, ts: new Date().toISOString() });
+      applyRenalWarning(opt.id, onDone);
+    }
+  );
+}
+
+function layerLabel(layer) {
+  return ({ normal: '肾功能正常', mild: '轻度不全', moderate: '中度不全', severe: '重度不全', extreme: '极重度不全 / 肾衰竭' })[layer] || layer;
+}
+
+function applyRenalWarning(layer, onDone) {
+  // 问题 103：小儿 + 任意肾功能不全（含轻度）→ 直接强制会诊，不进入场景推荐
+  // 依据：问题 88 铁律——小儿满足任意一条（<2岁 / 消化道基础病 / 肾功能不全含轻度 / 癌痛 / 神经痛）即强制会诊
+  if (S.ageGroup === 'child' && layer !== 'normal') {
+    const clcrTxt = layer === 'mild' ? 'CLcr 60-89'
+      : layer === 'moderate' ? 'CLcr 30-59'
+      : layer === 'severe' ? 'CLcr 15-29'
+      : 'CLcr < 15';
+    forceConsult('🚫 小儿 + 肾功能不全（' + layerLabel(layer) + '），必须专科会诊',
+      '<p style="font-size:14px;line-height:1.7;">患儿存在<strong>' + layerLabel(layer) + '</strong>（' + clcrTxt + ' mL/min）。</p><br>' +
+      '<p style="font-size:14px;">小儿肾功能不全时，所有镇痛药物的剂量和禁忌均需重新评估，本助手不提供任何具体药物推荐。</p><br>' +
+      '<p style="color:#dc2626;font-weight:700;">必须发起儿科 + 肾内科联合会诊。</p>',
+      '儿科 + 肾内科', 'child_renal_' + layer);
+    return;
+  }
+
+  if (layer === 'normal' || layer === 'mild') {
+    onDone();
+  } else if (layer === 'moderate') {
+    showModal('💡 建议：肾内科会诊',
+      '<p style="font-size:14px;line-height:1.7;">患者存在<strong>中度肾功能不全</strong>（CLcr 30-59 mL/min）。</p>' +
+      '<p style="margin-top:12px;font-size:14px;">建议发起<strong>肾内科会诊</strong>，评估药物剂量。具体推荐已按中度肾损调整。</p>',
+      'info',
+      [{ text: '我知道了，继续评估', class: 'info', onClick: () => { closeModal(); onDone(); } }]
+    );
+  } else if (layer === 'severe' || layer === 'extreme') {
+    const isExtreme = layer === 'extreme';
+    forceConsult(
+      isExtreme ? '🚫 极重度肾功能不全 / 肾衰竭' : '⚠️ 重度肾功能不全',
+      '<p style="font-size:14px;line-height:1.7;">患者存在<strong>' + layerLabel(layer) + '</strong>（CLcr ' + (isExtreme ? '&lt; 15' : '15-29') + ' mL/min）。</p><br>' +
+      '<p style="font-size:14px;"><strong>必须发起肾内科 + 疼痛科会诊。</strong></p>' +
+      '<p style="margin-top:8px;font-size:14px;">本场景下所有常规镇痛药物（NSAIDs、曲马多、杜冷丁、解痉药、加巴喷丁 / 普瑞巴林等）均禁用或不推荐。</p><br>' +
+      '<p style="color:#dc2626;font-weight:700;">切勿自行开具任何止痛药物。</p>',
+      '肾内科 + 疼痛科',
+      'renal_' + layer
+    );
+  } else {
+    onDone();
+  }
+}
+
+function showRenalManualForm(onResult) {
+  showModal('📝 肾功能指标输入',
+    '<p style="margin-bottom:12px;font-size:13px;color:#64748b;">请填写化验单上的指标，AI 将自动计算 CLcr 并匹配分层。' +
+    (S.ageGroup === 'child' ? '<br><strong>儿童使用 Schwartz 公式，需填写身高。</strong>' : '') + '</p>' +
+    '<div class="form-group"><label>血清肌酐（Scr）</label><input type="number" id="inScr" placeholder="例如 1.2" step="0.01"></div>' +
+    '<div class="form-group"><label>Scr 单位</label><select id="inScrUnit"><option value="mg/dL">mg/dL</option><option value="umol/L">μmol/L</option></select></div>' +
+    '<div class="form-group"><label>年龄（岁）</label><input type="number" id="inAge" placeholder="例如 68"></div>' +
+    '<div class="form-group"><label>体重（kg）</label><input type="number" id="inWeight" placeholder="例如 60" step="0.1"></div>' +
+    '<div class="form-group"><label>性别</label><select id="inGender"><option value="male">男</option><option value="female">女</option></select></div>' +
+    '<div class="form-group"><label>eGFR（可选）</label><input type="number" id="inEgfr" placeholder="例如 45" step="0.1"></div>' +
+    '<div class="form-group"><label>身高（cm，仅 eGFR 换算时填）</label><input type="number" id="inHeight" placeholder="例如 170" step="0.1"></div>',
+    'neutral',
+    [
+      { text: '取消', class: 'neutral', onClick: () => closeModal() },
+      { text: '计算并推荐', class: 'warning', onClick: () => {
+        const scr = parseFloat(document.getElementById('inScr').value);
+        const scrUnit = document.getElementById('inScrUnit').value;
+        const age = parseFloat(document.getElementById('inAge').value);
+        const weight = parseFloat(document.getElementById('inWeight').value);
+        const gender = document.getElementById('inGender').value;
+        const egfr = parseFloat(document.getElementById('inEgfr').value);
+        const height = parseFloat(document.getElementById('inHeight').value);
+        let clcr = null;
+        let scrMgDl = scr;
+        if (scrUnit === 'umol/L') scrMgDl = scr / 88.4;
+        if (S.ageGroup === 'child') {
+          // 问题 73：儿童使用 Schwartz 公式 CLcr = 0.413 × 身高(cm) / Scr(mg/dL)
+          if (scrMgDl && height) {
+            clcr = (0.413 * height) / scrMgDl;
+          } else {
+            alert('儿童肾功能计算需填写 血清肌酐（Scr）+ 身高（cm）。');
+            return;
+          }
+        } else {
+          if (scr && age && weight) {
+            const base = ((140 - age) * weight) / (72 * scrMgDl);
+            clcr = gender === 'female' ? base * 0.85 : base;
+          } else if (egfr && height && weight) {
+            const bsa = Math.sqrt((height * weight) / 3600);
+            clcr = egfr * (bsa / 1.73);
+          }
+        }
+        if (!clcr || isNaN(clcr)) { alert('请填写 Scr + 年龄 + 体重，或 eGFR + 身高 + 体重。'); return; }
+        let layer;
+        if (clcr >= 90) layer = 'normal';
+        else if (clcr >= 60) layer = 'mild';
+        else if (clcr >= 30) layer = 'moderate';
+        else if (clcr >= 15) layer = 'severe';
+        else layer = 'extreme';
+        closeModal();
+        addMessage('bot', '已计算：CLcr = <strong>' + clcr.toFixed(1) + ' mL/min</strong>\n分层：<strong>' + layerLabel(layer) + '</strong>', 'info', true);
+        onResult({ clcr, layer });
+      }}
+    ]
+  );
+}
+/* ============================================================
+   场景选择
+   ============================================================ */
+function start() {
+  showInitialDisclaimer();
+  S.stepCount = 1;
+  updateNavButtons();
+  addMessage('bot', '目前患者处于什么场景？');
+  renderOptions([
+    { id: 'spasm', label: '突发痉挛疼痛', hint: '胆绞痛 / 肾绞痛 / 肠痉挛' },
+    { id: 'postop', label: '术后疼痛', hint: '禁食期 / 恢复口服后' },
+    { id: 'cancer', label: '晚期癌痛', hint: '按病理机制阶梯用药' },
+    { id: 'neuropathic', label: '带状疱疹后神经痛', hint: '加巴喷丁 / 普瑞巴林' },
+  ], onScenePick, false);
+}
+
+function onScenePick(opt) {
+  S.scene = opt.id;
+  S.stepCount++;
+  addMessage('user', opt.label);
+  clearOptions();
+  setTimeout(() => {
+    addMessage('bot', '请确认患者年龄：');
+    renderOptions([
+      { id: 'adult', label: '成人（≥18岁）', hint: '按成人剂量评估' },
+      { id: 'child', label: '小儿（<18岁）', hint: '按体重计算，注意年龄禁忌' },
+    ], onAgePick, false);
+  }, 250);
+}
+
+function onAgePick(opt) {
+  S.ageGroup = opt.id;
+  S.stepCount++;
+  addMessage('user', opt.label);
+  clearOptions();
+  setTimeout(() => {
+    if (S.ageGroup === 'child') {
+      addMessage('bot', '⚠️ 涉及儿童用药，所有药物需按体重计算，NSAIDs 及阿片类药物需严格评估年龄禁忌。', 'warning');
+      // 问题 69：小儿 + 癌痛/神经痛 → 直接强制会诊，跳过年龄输入和肾功能筛查
+      if (S.scene === 'cancer' || S.scene === 'neuropathic') {
+        handleCancerOrNeuropathicChild();
+        return;
+      }
+      askChildAgeExact(() => {
+        askRenalScreen(onRenalDone);
+      });
+    } else {
+      askRenalScreen(onRenalDone);
+    }
+  }, 250);
+}
+
+/* 问题 69：小儿癌痛/神经痛统一入口 */
+function handleCancerOrNeuropathicChild() {
+  if (S.scene === 'cancer') {
+    forceConsult('🚫 小儿晚期癌痛，必须儿科 + 疼痛科联合会诊',
+      '<p style="font-size:14px;line-height:1.7;">小儿晚期癌痛管理涉及阿片类药物滴定、爆发痛处理、呼吸抑制风险监测等复杂问题。</p><br>' +
+      '<p style="font-size:14px;font-weight:700;">本助手不提供任何具体药物推荐。</p><br>' +
+      '<p style="color:#dc2626;font-weight:700;">请立即发起儿科 + 疼痛科联合会诊，由专科医生制定个体化镇痛方案。</p>',
+      '儿科 + 疼痛科', 'cancer_child');
+  } else if (S.scene === 'neuropathic') {
+    forceConsult('🚫 小儿带状疱疹后神经痛，必须儿科 + 疼痛科联合会诊',
+      '<p style="font-size:14px;line-height:1.7;">加巴喷丁在儿童中仅批准用于特定癫痫适应症，带状疱疹后神经痛适应症未获批；普瑞巴林不推荐 18 岁以下儿童使用。</p><br>' +
+      '<p style="color:#dc2626;font-weight:700;">必须发起儿科 + 疼痛科联合会诊。</p>',
+      '儿科 + 疼痛科', 'neuro_child');
+  }
+}
+
+function onRenalDone() {
+  S.stepCount++;
+  clearOptions();
+  if (S.scene === 'spasm') handleSpasm();
+  else if (S.scene === 'postop') handlePostop();
+  else if (S.scene === 'cancer') handleCancer();
+  else if (S.scene === 'neuropathic') handleNeuropathic();
+}
+
+/* ============================================================
+   场景：痉挛疼痛
+   ============================================================ */
+function handleSpasm() {
+  const isChild = S.ageGroup === 'child';
+  const age = S.childAgeExact;
+
+  if (isChild) {
+    // 问题 79 补全：小儿痉挛也需 NSAIDs 筛查，否则 checkChildBoundary 的溃疡/IBD 边界不可达
+    if (S.nsaidStatus === null) {
+      askNsaidScreening(() => handleSpasm());
+      return;
+    }
+    // 问题 87/88：小儿边界判定
+    const boundary = checkChildBoundary();
+    if (boundary) {
+      forceConsult('🚫 小儿 + ' + boundary.reason + '，必须专科会诊',
+        '<p style="font-size:14px;line-height:1.7;">患儿 ' + age + ' 岁，' + boundary.reason + '，且突发痉挛疼痛。</p>' +
+        '<p style="font-size:14px;">本场景下无安全的常规镇痛药物可选。</p><br>' +
+        '<p style="color:#dc2626;font-weight:700;">必须发起 ' + boundary.dept + ' 联合会诊。</p>',
+        boundary.dept, 'spasm_child_boundary');
+      return;
+    }
+
+    // 通过边界 → 白名单推荐
+    if (age >= 12) {
+      addMessage('bot',
+        '已记录：小儿（' + age + ' 岁）突发痉挛疼痛。\n\n' +
+        '推荐（白名单内）：\n' +
+        '① 间苯三酚（≥2岁，按体重）或右旋布洛芬按体重\n' +
+        '② 效果不佳 → 曲马多（≥12岁可用）\n' +
+        '③ 对乙酰氨基酚（按体重 10–15 mg/kg/次）可作为替代\n\n' +
+        '禁忌：\n· 阿司匹林禁用（Reye 综合征）\n\n' +
+        '⚠️ 涉及儿童用药，建议儿科会诊。', 'warning');
+    } else {
+      // 2-11 岁
+      addMessage('bot',
+        '已记录：小儿（' + age + ' 岁）突发痉挛疼痛。\n\n' +
+        '推荐（白名单内）：\n' +
+        '① 右旋布洛芬按体重（首选）\n' +
+        '   · 或对乙酰氨基酚混悬滴剂按体重 10–15 mg/kg/次\n' +
+        '② 间苯三酚限 ≥2 岁使用\n' +
+        '<strong>曲马多 &lt;12 岁禁用，不推荐</strong>\n\n' +
+        '禁忌：\n· 阿司匹林禁用（Reye 综合征）\n\n' +
+        '⚠️ 涉及儿童用药，建议儿科会诊。', 'warning');
+    }
+    finishScreen();
+    askConsultConfirm('⚠️ 儿童用药需会诊',
+      '<p>该患儿为小儿，使用止痛药需儿科医生评估。</p>',
+      '儿科', 'spasm_child_normal', () => clearOptions());
+    return;
+  }
+
+  // ============ 以下为成人路径（问题 78 修改） ============
+  // 问题 78：成人痉挛痛先做 NSAIDs 筛查，判断是否可联用酮咯酸
+  if (S.nsaidStatus === null) {
+    askNsaidScreening(() => handleSpasm());
+    return;
+  }
+
+  let text = '已记录：成人突发痉挛疼痛。\n\n';
+  if (S.nsaidStatus === 'none') {
+    text += '推荐方案（解痉药 + 酮咯酸联用）：\n' +
+      '① 间苯三酚（首选解痉药）\n   · 静脉或肌注，具体剂量按说明书\n' +
+      '② 酮咯酸氨丁三醇（联用止痛）\n   · 30mg 静注 / 肌注，每 6 小时一次\n   · <strong>65岁以上：静注单次15mg，肌注单次30mg，日最大60mg</strong>\n   · <span class="red-bold">⚠️ 连续使用不超过 5 天</span>\n' +
+      '③ 解痉药无效时，可加用屈他维林\n\n' +
+      '循证支持：酮咯酸联合解痉药治疗急性痉挛性腹痛、肾绞痛，疗效优于单用解痉药。\n';
+  } else {
+    const contra = S.nsaidStatus === 'ulcer' ? '胃十二指肠溃疡' : '炎症性肠病';
+    text += '🚫 患者合并 ' + contra + '，NSAIDs 禁用 / 不建议使用，本推荐已避开。\n\n' +
+      '推荐（仅解痉药）：\n' +
+      '① 间苯三酚（首选）\n   · 静脉或肌注，具体剂量按说明书\n' +
+      '② 屈他维林\n' +
+      '③ 解痉药无效时，建议疼痛科或相关专科会诊。\n';
+  }
+  text += '\n注意：评估肾功能、抗凝等其他禁忌。\n';
+
+  if (S.renalLayer === 'mild') {
+    text += '\n<span class="red-bold">⚠️ 轻度肾功能不全：间苯三酚 / 屈他维林需谨慎，建议减量或延长给药间隔。</span>';
+  } else if (S.renalLayer === 'moderate') {
+    text += '\n<span class="red-bold">⚠️ 中度肾功能不全：间苯三酚 / 屈他维林需减量，建议肾内科会诊。</span>';
+  } else if (S.renalStatus === 'unchecked') {
+    text += '\n<span class="red-bold">⚠️ 肾功能未查：间苯三酚 / 屈他维林需根据肾功能调整，建议尽快完善评估。</span>';
+  }
+  text += '\n\n<span class="red-bold">⚠️ 严重肝肾功能障碍者禁用间苯三酚 / 屈他维林。</span>';
+
+  const style = (S.renalLayer === 'moderate') ? 'warning' : 'final';
+  addMessage('bot', text, style, true);
+  finishScreen();
+}
+
+/* ============================================================
+   场景：术后疼痛
+   ============================================================ */
+function handlePostop() {
+  const afterScreen = () => {
+    showScreenOptions(
+      '🩺 术后疼痛评估',
+      '<p style="font-size:14px;">目前患者处于禁食期，还是已恢复口服？</p>',
+      'info',
+      [
+        { id: 'npo', class: 'warning', label: '禁食期' },
+        { id: 'po', class: 'success', label: '已恢复口服' },
+      ],
+      (opt) => {
+        if (opt.id === 'npo') handlePostopNpo();
+        else handlePostopPo();
+      }
+    );
+  };
+  if (S.nsaidStatus === null) askNsaidScreening(afterScreen);
+  else afterScreen();
+}
+
+function handlePostopNpo() {
+  const isChild = S.ageGroup === 'child';
+  const age = S.childAgeExact;
+  let text, style = 'final';
+
+  // 问题 87/88：小儿路径优先走边界判定 + 白名单
+  if (isChild) {
+    const boundary = checkChildBoundary();
+    if (boundary) {
+      forceConsult('🚫 小儿 + ' + boundary.reason + '，必须专科会诊',
+        '<p style="font-size:14px;line-height:1.7;">患儿 ' + age + ' 岁，' + boundary.reason + '，且处于术后禁食期。</p>' +
+        '<p style="font-size:14px;">本场景下无安全的常规镇痛药物可选。</p><br>' +
+        '<p style="color:#dc2626;font-weight:700;">必须发起 ' + boundary.dept + ' 联合会诊。</p>',
+        boundary.dept, 'postop_npo_child_boundary');
+      return;
+    }
+    if (age >= 12) {
+      // 白名单里术后禁食可用的：曲马多（>12）
+      addMessage('bot',
+        '已记录：小儿（' + age + ' 岁）术后禁食期。\n\n' +
+        '推荐（白名单内）：\n' +
+        '① 曲马多针（≥12岁可用）\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n' +
+        '② 效果不佳 → 芬太尼类（需麻醉 / 疼痛科评估）\n\n' +
+        '<span class="red-bold">⚠️ 酮咯酸氨丁三醇、吲哚美辛栓在 2-16 岁儿童中仅限单次给药，多次给药安全性未确立，不推荐用于多次术后镇痛。</span>\n\n' +
+        '⚠️ 涉及儿童用药，建议儿科会诊。', 'warning');
+    } else {
+      // 2-11 岁 无禁忌 无可用注射药 → 强制会诊
+      forceConsult('🚫 小儿（' + age + ' 岁）+ 术后禁食，无可用注射药物',
+        '<p style="font-size:14px;line-height:1.7;">患儿 ' + age + ' 岁，术后禁食期。</p>' +
+        '<p style="font-size:14px;">白名单内：对乙酰氨基酚 / 右旋布洛芬为口服剂型（禁食不可用）；曲马多 &lt;12 岁禁用；间苯三酚不适用于术后镇痛。</p><br>' +
+        '<p style="color:#dc2626;font-weight:700;">必须发起儿科会诊，评估镇痛方案（可考虑对乙酰氨基酚静脉制剂、芬太尼类等）。</p>',
+        '儿科', 'postop_npo_child_lt12');
+      return;
+    }
+    finishScreen();
+    askConsultConfirm('⚠️ 儿童用药需会诊',
+      '<p>该患儿为小儿，术后镇痛需儿科医生评估。</p>',
+      '儿科', 'postop_npo_child', () => clearOptions());
+    return;
+  }
+
+  // ============ 以下为成人路径（保持 B1 修复后的逻辑） ============
+  if (S.nsaidStatus === 'ulcer') {
+    text = '已记录：术后禁食期（合并胃十二指肠溃疡）。\n\n🚫 NSAIDs 禁用，已从阶梯中移除。\n\n调整后阶梯：\n' +
+      '① 曲马多针\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n② 效果不佳 → 芬太尼类（需麻醉/疼痛科评估）\n\n';
+    style = 'danger';
+  } else if (S.nsaidStatus === 'ibd') {
+    text = '已记录：术后禁食期（合并炎症性肠病）。\n\n🚫 NSAIDs 不建议使用，已从阶梯中移除。\n\n调整后阶梯（从曲马多开始）：\n' +
+      '① 曲马多针\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n② 效果不佳 → 芬太尼类（需麻醉/疼痛科评估）\n';
+    style = 'warning';
+  } else {
+    if (S.renalLayer === 'moderate' || S.renalLayer === 'severe') {
+      text = '已记录：术后禁食期（中度及以上肾功能不全）。\n\n' +
+        '<span class="red-bold">🚫 避免使用 NSAIDs（酮咯酸、吲哚美辛、氟比洛芬酯等）——CKD 3 期以上肾毒性风险高，减量也无法完全规避。</span>\n\n' +
+        '调整后阶梯（避开 NSAIDs）：\n' +
+        '① 曲马多针\n   · <strong>中度肾损：起始 50mg q8h</strong>\n   · 每日最高 400mg\n' +
+        '② 效果不佳 → 芬太尼类（需麻醉/疼痛科评估）\n\n' +
+        '大手术常规建议：舒芬太尼 PCIA 止痛泵\n\n' +
+        '<span class="red-bold">⚠️ 建议发起肾内科会诊，评估镇痛方案。</span>';
+      style = 'warning';
+    } else {
+      text = '已记录：术后禁食期。\n\n阶梯：\n' +
+        '① 酮咯酸氨丁三醇（术后首选）\n   · 30mg 静注 / 肌注，每 6 小时一次\n   · <strong>65岁以上：静注单次15mg，肌注单次30mg，日最大60mg</strong>\n   · 最大日剂量 120mg（65岁以下）/ 60mg（65岁以上或肾损伤）\n   · <span class="red-bold">⚠️ 连续使用不超过 5 天</span>\n' +
+        '② 吲哚美辛栓（伴发热优选）\n   · 每 4-6 小时一次，24 小时内不超过 4 粒\n   · <span class="red-bold">⚠️ 老年患者使用可能引起低血压、头晕，增加跌倒风险，建议从小剂量开始并监测血压。</span>\n' +
+        '③ 效果不佳 → 曲马多针\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n' +
+        '④ 仍不佳 → 芬太尼类（需麻醉/疼痛科评估）\n\n' +
+        '大手术常规建议：舒芬太尼 PCIA 止痛泵\n\n' +
+        '⚠️ 请严格遵守各药物给药间隔及每日最大剂量。';
+      if (S.renalLayer === 'mild') {
+        text += '\n\n<span class="red-bold">⚠️ 轻度肾功能不全：酮咯酸需减量（静注15mg / 肌注30mg，日最大60mg），曲马多建议延长给药间隔至 q8h。</span>';
+      } else if (S.renalStatus === 'unchecked') {
+        text += '\n\n<span class="red-bold">⚠️ 肾功能未查：酮咯酸、吲哚美辛等需根据肾功能调整，建议尽快完善评估。</span>';
+      }
+      style = (S.renalLayer === 'mild' || S.renalStatus === 'unchecked') ? 'warning' : 'final';
+    }
+  }
+  addMessage('bot', text, style, true);
+  finishScreen();
+}
+
+function handlePostopPo() {
+  // 问题 87/88：小儿路径优先，成人路径保持原有 ulcerActivity 追问逻辑
+  const isChild = S.ageGroup === 'child';
+  const age = S.childAgeExact;
+
+  if (isChild) {
+    const boundary = checkChildBoundary();
+    if (boundary) {
+      forceConsult('🚫 小儿 + ' + boundary.reason + '，必须专科会诊',
+        '<p style="font-size:14px;line-height:1.7;">患儿 ' + age + ' 岁，' + boundary.reason + '，术后恢复口服。</p>' +
+        '<p style="font-size:14px;">本场景下无安全的常规镇痛药物可选。</p><br>' +
+        '<p style="color:#dc2626;font-weight:700;">必须发起 ' + boundary.dept + ' 联合会诊。</p>',
+        boundary.dept, 'postop_po_child_boundary');
+      return;
+    }
+    if (age >= 12) {
+      addMessage('bot',
+        '已记录：小儿（' + age + ' 岁）术后恢复口服。\n\n' +
+        '推荐（白名单内）：\n' +
+        '① 对乙酰氨基酚\n   · 片剂（500mg/片）每次 250–500mg，或滴剂 / 混悬液按体重 10–15 mg/kg/次\n   · 24 小时累计不超过 2g\n' +
+        '② 右旋布洛芬按体重\n' +
+        '③ 效果不佳 → 曲马多（≥12岁可用）\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n\n' +
+        '⚠️ 涉及儿童用药，建议儿科会诊。', 'warning');
+    } else {
+      addMessage('bot',
+        '已记录：小儿（' + age + ' 岁）术后恢复口服。\n\n' +
+        '推荐（白名单内）：\n' +
+        '① 对乙酰氨基酚\n' +
+        (age < 6
+          ? '   · <span class="red-bold">⚠️ 请勿使用对乙酰氨基酚片剂（不推荐 6 岁以下儿童），应选用滴剂或混悬液</span>\n   · 按体重 10–15 mg/kg/次，每 4–6 小时一次，24h 不超过 4 次\n'
+          : '   · 片剂（500mg/片）每次 250–500mg，或滴剂 / 混悬液按体重 10–15 mg/kg/次\n') +
+        '② 右旋布洛芬按体重\n' +
+        '③ <strong>曲马多 &lt;12 岁禁用，不推荐</strong>\n\n' +
+        '⚠️ 涉及儿童用药，建议儿科会诊。', 'warning');
+    }
+    finishScreen();
+    askConsultConfirm('⚠️ 儿童用药需会诊',
+      '<p>该患儿为小儿，术后镇痛需儿科医生评估。</p>',
+      '儿科', 'postop_po_child', () => clearOptions());
+    return;
+  }
+
+  // ============ 以下为成人路径（保持原有逻辑） ============
+  const render = () => {
+    let text, style = 'final';
+
+    if (S.nsaidStatus === 'ulcer') {
+      if (S.ulcerActivity === 'active' || S.ulcerActivity === null) {
+        text = '已记录：术后恢复口服（合并活动性胃十二指肠溃疡）。\n\n🚫 塞来昔布 / 依托考昔禁用！\n\n推荐（直接避开 NSAIDs）：\n' +
+          '① 对乙酰氨基酚\n   · 每 4-6 小时一次，每日不超过 2g\n' +
+          '② 效果不佳 → 曲马多\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n';
+        style = 'danger';
+      } else {
+        text = '已记录：术后恢复口服（有胃十二指肠溃疡病史，已愈合）。\n\n推荐（优先避开 NSAIDs）：\n' +
+          '① 对乙酰氨基酚\n   · 每 4-6 小时一次，每日不超过 2g\n' +
+          '② 效果不佳 → 曲马多\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n\n若确需使用塞来昔布：\n· 必须联合 PPI 进行胃保护\n· 建议发起消化科会诊\n';
+        style = 'warning';
+      }
+    } else if (S.nsaidStatus === 'ibd') {
+      text = '已记录：术后恢复口服（合并炎症性肠病）。\n\n🚫 NSAIDs 不建议使用。\n\n推荐：\n' +
+        '① 对乙酰氨基酚\n   · 每 4-6 小时一次，每日不超过 2g\n' +
+        '② 效果不佳 → 曲马多\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n' +
+        '\n⚠️ 需消化内科会诊。';
+      style = 'warning';
+    } else {
+      if (S.renalLayer === 'moderate' || S.renalLayer === 'severe') {
+        text = '已记录：术后恢复口服（中度及以上肾功能不全）。\n\n' +
+          '<span class="red-bold">🚫 避免使用 NSAIDs（酮咯酸、氟比洛芬酯、吲哚美辛、塞来昔布等）——CKD 3 期以上肾毒性风险高。</span>\n\n' +
+          '调整后推荐：\n' +
+          '① 对乙酰氨基酚（无肾毒性）\n   · 每 4-6 小时一次，每日不超过 2g\n' +
+          '② 效果不佳 → 曲马多\n   · <strong>中度肾损：起始 50mg q8h</strong>，每日最高 400mg\n' +
+          '③ 仍不佳 → 芬太尼类（需麻醉/疼痛科评估）\n\n' +
+          '<span class="red-bold">⚠️ 建议发起肾内科会诊，评估镇痛方案。</span>';
+        style = 'warning';
+      } else {
+        text = '已记录：术后恢复口服。\n\n<strong>说明：可以口服 ≠ 必须口服。</strong>若疼痛仍剧烈，可继续使用针剂或栓剂。\n\n推荐阶梯：\n' +
+          '① 酮咯酸氨丁三醇\n   · 口服：首次 2 粒，后每 4-6 小时 1 粒，最大口服剂量不超过 40mg/24h\n   · <span class="red-bold">⚠️ 酮咯酸连续使用（注射+口服合计）不得超过 5 天！</span>\n' +
+          '② 氟比洛芬酯（酮咯酸到期后的替代）\n   · 50mg 静注，每日 1-2 次，每日总量不超过 250mg\n' +
+          '③ 吲哚美辛栓\n   · <span class="red-bold">⚠️ 老年患者使用可能引起低血压、头晕，建议从小剂量开始并监测血压。</span>\n' +
+          '④ 散利痛（兼退热）\n' +
+          '⑤ 效果不佳 → 曲马多\n\n' +
+          '慢性疼痛才考虑：塞来昔布 / 依托考昔\n\n' +
+          '⚠️ 请严格遵守各药物给药间隔及每日最大剂量。';
+        if (S.renalLayer === 'mild') {
+          text += '\n\n<span class="red-bold">⚠️ 轻度肾功能不全：酮咯酸需减量（单次15mg），曲马多建议 q8h。</span>';
+        } else if (S.renalStatus === 'unchecked') {
+          text += '\n\n<span class="red-bold">⚠️ 肾功能未查：建议尽快完善评估。</span>';
+        }
+        style = (S.renalLayer === 'mild' || S.renalStatus === 'unchecked') ? 'warning' : 'final';
+      }
+    }
+    addMessage('bot', text, style, true);
+    finishScreen();
+  };
+
+  if (S.nsaidStatus === 'ulcer' && S.ulcerActivity === null) {
+    askUlcerActivity(render);
+  } else {
+    render();
+  }
+}
+
+/* ============================================================
+   场景：晚期癌痛（问题 91 修复）
+   ============================================================ */
+function handleCancer() {
+  // 问题 69：小儿已在 onAgePick 拦截并强制会诊，此函数只处理成人
+
+  // 问题 92：晚期癌痛 + 肾功能不全（哪怕轻度）→ 强制会诊
+  if (S.renalLayer && S.renalLayer !== 'normal') {
+    const layerTxt = layerLabel(S.renalLayer);
+    forceConsult('🚫 晚期癌痛合并肾功能不全，必须专科会诊',
+      '<p style="font-size:14px;line-height:1.7;">患者为晚期癌痛，且存在<strong>' + layerTxt + '</strong>。</p><br>' +
+      '<p style="font-size:14px;">癌症患者身体耐受力差，肾功能不全时阿片类活性代谢产物易蓄积，存在呼吸抑制等严重风险。</p><br>' +
+      '<p style="color:#dc2626;font-weight:700;">请立即发起疼痛科 + 肾内科联合会诊。</p>' +
+      '<p style="color:#dc2626;font-weight:700;">本助手不提供任何具体药物推荐。</p>',
+      '疼痛科 + 肾内科', 'cancer_renal_' + S.renalLayer);
+    return;
+  }
+
+  const proceed = () => {
+    showScreenOptions(
+      '🩺 晚期癌痛评估',
+      '<p style="font-size:14px;">患者目前能否口服？</p>',
+      'info',
+      [
+        { id: 'po', class: 'success', label: '能口服' },
+        { id: 'npo', class: 'warning', label: '不能口服' },
+      ],
+      (opt) => {
+        // ★ 关键修复：用 id 判断，不再用 label.indexOf('能口服')
+        if (opt.id === 'po') handleCancerPo();
+        else handleCancerNpo();
+      }
+    );
+  };
+  const nsaidCheck = () => { if (S.nsaidStatus === null) askNsaidScreening(proceed); else proceed(); };
+
+  showModal('💡 建议：疼痛科会诊',
+    '<p style="font-size:14px;line-height:1.7;">晚期癌痛管理涉及复杂的阿片类药物滴定、爆发痛处理及不良反应预防。</p>' +
+    '<p style="margin-top:12px;font-size:14px;">建议根据患者情况，适时发起 <strong>疼痛科（或姑息治疗科）会诊</strong>，制定个体化方案。</p>',
+    'info',
+    [{ text: '我知道了，继续评估', class: 'info', onClick: () => { closeModal(); nsaidCheck(); } }]
+  );
+}
+
+function handleCancerPo() {
+  const render = () => {
+    let text, style = 'final';
+    if (S.nsaidStatus === 'ulcer' && S.ulcerActivity === 'active') {
+      text = '已记录：晚期癌痛，可口服（合并活动性胃十二指肠溃疡）。\n\n🚫 塞来昔布 / 依托考昔禁用！\n\n阶梯（直接避开 NSAIDs）：\n① 对乙酰氨基酚\n   · 每 4-6 小时一次，每日不超过 2g\n② 效果不佳 → 曲马多\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n③ 仍不佳 → 奥施康定\n   · Q12h，10mg 起始，按 25–50% 滴定\n\n注意：杜冷丁不进入癌痛阶梯（WHO 不推荐）。';
+      style = 'danger';
+    } else if (S.nsaidStatus === 'ulcer' && S.ulcerActivity === 'history') {
+      text = '已记录：晚期癌痛，可口服（有胃十二指肠溃疡病史，已愈合）。\n\n阶梯：\n① 对乙酰氨基酚\n   · 每 4-6 小时一次，每日不超过 2g\n② 效果不佳 → 曲马多\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n③ 仍不佳 → 奥施康定（Q12h，10mg 起始）\n\n若确需使用塞来昔布：\n· 必须联合 PPI 进行胃保护\n· 建议发起消化科会诊';
+      style = 'warning';
+    } else if (S.nsaidStatus === 'ibd') {
+      text = '已记录：晚期癌痛，可口服（合并炎症性肠病）。\n\n🚫 NSAIDs 不建议使用。\n\n阶梯（直接避开 NSAIDs）：\n① 对乙酰氨基酚\n   · 每 4-6 小时一次，每日不超过 2g\n② 效果不佳 → 曲马多\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n③ 仍不佳 → 奥施康定（Q12h，10mg 起始）\n\n⚠️ 需消化内科会诊。';
+      style = 'warning';
+    } else {
+      text = '已记录：晚期癌痛，可口服。\n\n阶梯：\n① 对乙酰氨基酚\n   · 每 4-6 小时一次，每日不超过 2g\n② 效果不佳 → 曲马多\n   · 50-100mg，每 4-6 小时一次，每日最高 400mg\n③ 仍不佳 → 奥施康定（Q12h，10mg 起始，按 25–50% 滴定）\n\n注意：杜冷丁不进入癌痛阶梯（WHO 不推荐）。\n\n<strong>补充说明：</strong>\n· 若出现爆发痛，可短期使用<strong>氟比洛芬酯注射液</strong>（50mg 静注，每日 1-2 次，每日总量不超过 250mg）\n· 若需口服 NSAIDs，可考虑<strong>塞来昔布 / 依托考昔</strong>，但需评估胃肠道及心血管风险；有溃疡 / IBD 病史者禁用或慎用';
+    }
+    // 问题 92：handleCancer 入口已对 renalLayer !== 'normal' 强制会诊并 return，
+    // 此处仅处理 renalLayer === 'normal'。轻度/中度/未查补丁已不可达，故删除。
+    addMessage('bot', text, style, true);
+    finishScreen();
+  };
+  if (S.nsaidStatus === 'ulcer' && S.ulcerActivity === null) askUlcerActivity(render);
+  else render();
+}
+
+function handleCancerNpo() {
+  // 问题 72：多瑞吉（芬太尼透皮贴）禁用于阿片未耐受患者
+  // 输出前先追问阿片耐受状态
+  showScreenOptions(
+    '🔍 阿片耐受状态确认（多瑞吉前置条件）',
+    '<p style="font-size:14px;"><strong>芬太尼透皮贴（多瑞吉）禁用于阿片未耐受患者。</strong></p>' +
+    '<p style="font-size:14px;margin-top:8px;">起效 12–24h，无法快速滴定，半衰期长，一旦呼吸抑制难以逆转。</p>' +
+    '<p style="font-size:14px;margin-top:12px;">请问患者是否为阿片耐受？</p>' +
+    '<p style="font-size:12px;color:#94a3b8;margin-top:8px;">阿片耐受定义：已规律使用口服吗啡 ≥60mg/日、芬太尼透皮贴 ≥25μg/h、羟考酮 ≥30mg/日、氢吗啡酮 ≥8mg/日，持续 ≥1 周。</p>',
+    'info',
+    [
+      { id: 'tolerant', class: 'success', label: '是，已阿片耐受' },
+      { id: 'naive', class: 'warning', label: '否，阿片未耐受 / 不确定' },
+    ],
+    (opt) => {
+      if (opt.id === 'tolerant') {
+        handleCancerNpoTolerant();
+      } else {
+        handleCancerNpoNaive();
+      }
+    }
+  );
+}
+
+function handleCancerNpoTolerant() {
+  let text, style = 'final';
+  if (S.nsaidStatus === 'ulcer') {
+    text = '已记录：晚期癌痛，不能口服（合并胃十二指肠溃疡）。\n\n🚫 氟比洛芬酯等 NSAIDs 已从推荐中移除。\n\n常规推荐：\n① 多瑞吉贴剂\n   · 起效 12–24h，72h 达稳态，每 72h 更换\n\n⚠️ 如确需使用 NSAIDs，必须先联系消化科会诊。\n\n<strong>待患者恢复口服后</strong>，可考虑联合加巴喷丁 / 普瑞巴林。';
+    style = 'warning';
+  } else if (S.nsaidStatus === 'ibd') {
+    text = '已记录：晚期癌痛，不能口服（合并炎症性肠病）。\n\n🚫 氟比洛芬酯等 NSAIDs 已从推荐中移除。\n\n常规推荐：\n① 多瑞吉贴剂\n   · 起效 12–24h，72h 达稳态，每 72h 更换\n\n⚠️ 需消化内科会诊。\n\n<strong>待患者恢复口服后</strong>，可考虑联合加巴喷丁 / 普瑞巴林。';
+    style = 'warning';
+  } else {
+    text = '已记录：晚期癌痛，不能口服。\n\n常规推荐（均为非口服途径）：\n' +
+      '① 多瑞吉贴剂\n   · 起效 12–24h，72h 达稳态，每 72h 更换\n' +
+      '② 氟比洛芬酯注射液\n   · 50mg 静脉给予，每日 1-2 次，每日总量不超过 250mg\n   · 适用于不能口服或口服效果不理想时的镇痛\n\n' +
+      '<strong>待患者恢复口服后</strong>，可考虑联合加巴喷丁 / 普瑞巴林。';
+  }
+  addMessage('bot', text, style, true);
+  finishScreen();
+  scheduleCancerAdvancedOption();
+}
+
+function handleCancerNpoNaive() {
+  addMessage('bot',
+    '已记录：晚期癌痛，不能口服（<strong>阿片未耐受</strong>）。\n\n' +
+    '<span class="red-bold">🚫 多瑞吉（芬太尼透皮贴）禁用于阿片未耐受患者。</span>\n' +
+    '原因：起效 12–24h 无法快速滴定，半衰期长，一旦呼吸抑制难以逆转。\n\n' +
+    '<strong>推荐路径：</strong>\n' +
+    '① 短效阿片类静脉滴定（如吗啡、芬太尼注射剂），至疼痛控制稳定\n' +
+    '② 阿片耐受后，方可考虑转换为多瑞吉贴剂\n' +
+    '③ 若患者确实无法口服，需疼痛科会诊指导滴定方案\n\n' +
+    '<span class="red-bold">⚠️ 阿片未耐受患者的初始滴定必须由有经验的临床医生实施，建议立即发起疼痛科会诊。</span>',
+    'danger', true);
+  finishScreen();
+  forceConsult('🚫 阿片未耐受，需疼痛科指导滴定',
+    '<p style="font-size:14px;line-height:1.7;">患者阿片未耐受，禁用多瑞吉透皮贴。</p>' +
+    '<p style="font-size:14px;">必须由疼痛科指导短效阿片类静脉滴定，至稳定后再评估转换方案。</p>',
+    '疼痛科', 'cancer_npo_opioid_naive');
+}
+
+function scheduleCancerAdvancedOption() {
+  setTimeout(() => {
+    addMessage('bot',
+      '—————— ⚠️ 以下方案需疼痛科会诊后评估 ——————\n' +
+      '<strong>如果常规方案仍效果不佳，可考虑升级至高级镇痛 / 介入方案。</strong>\n' +
+      '具体方案需疼痛科（或 MDT）会诊后评估实施。\n' +
+      '<span class="red-bold">请勿在会诊前向家属承诺具体手段。</span>', 'warning', true);
+
+    showScreenOptions(
+      '🔍 高级方案评估',
+      '<p style="font-size:14px;">常规镇痛方案效果不佳时，可考虑升级至高级镇痛 / 介入方案。</p>' +
+      '<p style="margin-top:8px;font-size:14px;">这些方案属于高级 / 侵入性方案，存在显著医疗风险，必须由疼痛科主导实施。</p>' +
+      '<p style="margin-top:8px;font-size:13px;color:#64748b;">具体方案种类及可行性，需由疼痛科根据患者情况判断。</p>',
+      'info',
+      [
+        { id: 'no', class: 'neutral', label: '否，暂不考虑' },
+        { id: 'yes', class: 'warning', label: '是，需疼痛科会诊' },
+      ],
+      (opt) => {
+        if (opt.id === 'no') {
+          addMessage('bot', '已选择暂不考虑高级方案，继续常规镇痛方案。', 'final');
+          finishScreen();
+        } else {
+          showModal('🚫 高级方案需疼痛科会诊',
+            '<p style="font-size:14px;line-height:1.7;">高级镇痛 / 介入方案 <strong>存在显著医疗风险</strong>（如感染、出血、神经损伤、呼吸抑制等）。</p>' +
+            '<p style="margin-top:12px;font-size:14px;line-height:1.7;color:#dc2626;font-weight:700;">切勿在未经疼痛科会诊的情况下自行实施。</p>' +
+            '<p style="margin-top:12px;font-size:13px;color:#64748b;background:#f8fafc;padding:10px;border-radius:6px;">💬 建议与家属沟通时表述为：“目前的常规镇痛方案正在调整，必要时我们会邀请疼痛科专家团队会诊，评估是否有更进一步的镇痛手段。”<br><br><strong>切勿</strong>在会诊前向家属承诺“可以放吗啡泵”或“可以做神经毁损”。</p>',
+            'danger',
+            [
+              { text: '暂不使用，返回常规方案', class: 'neutral', onClick: () => { closeModal(); finishScreen(); } },
+              { text: '已联系疼痛科会诊，继续查看方案', class: 'danger', onClick: () => {
+                closeModal();
+                addMessage('bot',
+                  '✅ 已确认疼痛科会诊。\n\n高级方案（需疼痛科 / MDT 评估后实施）：\n① 鞘内吗啡泵\n② 神经阻滞\n③ 神经毁损（万不得已）\n\n具体是否实施、实施何种方案，以疼痛科 / MDT 最终评估意见为准。', 'warning');
+                finishScreen();
+              }},
+            ]
+          );
+        }
+      }
+    );
+  }, 400);
+}
+
+/* ============================================================
+   场景：带状疱疹后神经痛
+   ============================================================ */
+function handleNeuropathic() {
+  // 问题 69：小儿已在 onAgePick 拦截并强制会诊，此函数只处理成人
+  const layer = S.renalLayer || 'normal';
+  let text = '已记录：带状疱疹后神经痛。\n\n推荐：\n① 加巴喷丁\n② 普瑞巴林\n\n请按以下肾功能分层剂量使用：\n';
+  let advice = '';
+  if (layer === 'normal') advice = '· 加巴喷丁 300mg 睡前起始，最大 3600mg/日，分 3 次给药\n· 普瑞巴林 150mg/日起始，最大 600mg/日';
+  else if (layer === 'mild') advice = '· 加巴喷丁 300mg/日起始，最大 2400mg/日\n· 普瑞巴林 150mg/日起始，最大 450mg/日';
+  else if (layer === 'moderate') advice = '· 加巴喷丁 100-300mg/日起始，最大 600-1200mg/日\n· 普瑞巴林 75mg/日起始，最大 300mg/日';
+  else if (layer === 'severe') advice = '· 加巴喷丁 <150mg/日起始，最大 150-600mg/日\n· 普瑞巴林 25-50mg/日起始，最大 150mg/日';
+  else advice = '⚠️ 极重度肾功能不全，请参见肾内科会诊建议。';
+  text += advice + '\n\n注意：\n· 两者均需至少 1 周逐渐减量，不可骤停\n· 常见不良反应：头晕、嗜睡、外周水肿';
+  if (S.renalStatus === 'unchecked') text += '\n\n<span class="red-bold">⚠️ 肾功能未查：加巴喷丁 / 普瑞巴林需根据肾功能调整剂量，请尽快完善评估。</span>';
+
+  // 问题 93：中度肾损 → 弹出建议会诊弹窗（非强制，允许按调整剂量继续）
+  if (layer === 'moderate') {
+    addMessage('bot', text, 'warning', true);
+    finishScreen();
+    askConsultConfirm('💡 中度肾功能不全，建议会诊',
+      '<p style="font-size:14px;line-height:1.7;">患者 CLcr 30-59 mL/min，加巴喷丁 / 普瑞巴林需减量使用。</p>' +
+      '<p style="font-size:14px;">· 加巴喷丁 100-300mg/日起始，最大 600-1200mg/日</p>' +
+      '<p style="font-size:14px;">· 普瑞巴林 75mg/日起始，最大 300mg/日</p>' +
+      '<p style="margin-top:12px;font-size:14px;">建议发起肾内科或疼痛科会诊，评估剂量及监测方案。</p>',
+      '肾内科 / 疼痛科', 'neuro_moderate_renal', () => clearOptions());
+    return;
+  }
+
+  const style = (layer === 'severe' || layer === 'extreme') ? 'danger' : 'final';
+  addMessage('bot', text, style, true);
+  finishScreen();
+}
+
+/* ============================================================
+   启动
+   ============================================================ */
+start();
+</script>
+</body>
+</html>
