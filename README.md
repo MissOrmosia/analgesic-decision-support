@@ -105,9 +105,13 @@
 
 **项目定位**：本项目的首要目的，是以交互原型的形式验证"临床红线应该设在哪里、如何拦截"——而非可直接上线的商业软件。
 
-## 免责声明
+## ⚠️ 免责声明与使用边界
 
-本工具所有输出须由具备处方权的专业人员结合患者实际情况审核确认。本项目不构成医疗建议，不替代专科会诊。作者不承担因使用本工具产生的任何责任。
+**本项目系作者作为“独立 AI 研究者”的个人业余技术探索，绝不代表作者供职的任何医疗机构、组织或雇主的官方立场。**
+
+1. **纯技术原型，非医疗器械**：本工具为纯前端单文件 HTML 演示，仅用于临床决策逻辑的交互展示。它**不是**经过临床验证、监管审批的医疗器械。本仓库未使用、不处理、不存储任何真实患者健康信息（PHI）。
+2. **不构成医疗建议**：工具的所有输出仅供参考，**不构成任何形式的专业医疗建议、诊断或治疗方案**。
+3. **责任归属**：临床医生必须对工具的推荐内容进行独立复核。最终处方决策及产生的医疗责任，完全由具备处方权的执业医师承担。作者不对任何因依赖本工具而产生的直接或间接后果承担法律责任。
 
 ---
 
@@ -215,6 +219,10 @@ Full changelog: [CHANGELOG.md](CHANGELOG.md).
 
 **Project positioning**: The primary goal of this project is to validate, as an interactive prototype, *where clinical red lines should sit and how they should be enforced* — not to be production-ready commercial software.
 
-## Disclaimer
+## ⚠️ Disclaimer & Limitations of Use
 
-All outputs of this tool must be reviewed and confirmed by a licensed prescriber in light of the patient's actual condition. This project does not constitute medical advice and does not replace specialist consultation. The author assumes no liability for any consequences arising from the use of this tool.
+**This project is a personal technical exploration by the author acting in an "independent researcher" capacity and does not represent the official position, policies, or opinions of the author's affiliated institution.**
+
+1. **Technical Prototype, Not a Medical Device**: This is a pure front-end, single-file HTML demonstration for clinical logic and interaction design. It is **NOT** a clinically validated or regulatory-approved medical device. No real patient health information (PHI) is used, processed, or stored in this repository.
+2. **Not Medical Advice**: All outputs are for reference only and **do not constitute professional medical advice, diagnosis, or treatment**.
+3. **Liability**: Clinicians must independently verify any recommendations. The ultimate responsibility and liability for any clinical decision remain solely with the licensed prescribing physician. The author assumes no legal liability for any direct or indirect consequences arising from the use of this tool.
