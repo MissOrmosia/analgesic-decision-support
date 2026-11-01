@@ -8,13 +8,11 @@
 
 ## 📸 界面预览 / Preview
 
-**1. 合规与安全拦截（强制警告）**
-*打开即触发，防止非专业人士误用，这是医疗产品的底线。*
-https://github.com/MissOrmosia/analgesic-decision-support/blob/main/Screenshot-1.png
+1. **合规与安全拦截（强制警告）**：打开即触发，防止非专业人士误用，这是医疗产品的底线。
+![合规与安全拦截](Screenshot-1.png)
 
-**2. 临床决策输出与预警**
-*针对晚期癌痛+不能口服的患者，系统给出的阶梯推荐及高危风险提示。*
-https://github.com/MissOrmosia/analgesic-decision-support/blob/main/Screenshot-2.png
+2. **临床决策输出与预警**：针对晚期癌痛+不能口服的患者，系统给出的阶梯推荐及高危风险提示。
+![临床决策输出](Screenshot-2.png)
 
 > 📝 **当前状态**：最终输出内容（用药方针）的措辞仍在进一步修订中，beta1.0 规则框架已冻结。
 
@@ -126,16 +124,6 @@ https://github.com/MissOrmosia/analgesic-decision-support/blob/main/Screenshot-2
 A guided, decision-tree-style analgesic prescribing assistant for frontline clinical use. Single-file HTML — open it and it runs.
 
 **Live demo**: https://missormosia.github.io/analgesic-decision-support/
-
-## 📸 Interface Preview
-
-**1. Compliance & Safety Interception (Mandatory Warning)**
-*Triggered upon opening to prevent misuse by non-professionals. This is the baseline for medical products.*
-https://github.com/MissOrmosia/analgesic-decision-support/blob/main/Screenshot-1.png
-
-**2. Clinical Decision Output & Warning**
-*The stepwise recommendation and high-risk alerts generated for an advanced cancer pain patient unable to take oral medication.*
-https://github.com/MissOrmosia/analgesic-decision-support/blob/main/Screenshot-2.png
 
 > 📝 **Status**: The wording of the final output content (medication policy) is still being refined; the beta1.0 rule framework is frozen.
 
