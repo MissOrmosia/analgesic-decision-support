@@ -113,6 +113,16 @@
 2. **不构成医疗建议**：工具的所有输出仅供参考，**不构成任何形式的专业医疗建议、诊断或治疗方案**。
 3. **责任归属**：临床医生必须对工具的推荐内容进行独立复核。最终处方决策及产生的医疗责任，完全由具备处方权的执业医师承担。作者不对任何因依赖本工具而产生的直接或间接后果承担法律责任。
 
+## 🌐 作者的其他开源项目 / Explore My Other Works
+
+作为一名三甲外科医生与独立 AI 研究者，我不仅关注 AI 在具体临床场景（如本项目的镇痛用药）中的产品落地，也致力于从底层评测（Evaluation）与对抗数据（Red Teaming）的视角，系统性审计医疗大模型的安全性。
+
+欢迎探索我的完整开源矩阵（它们互为姊妹项目，共同构成了一个从“评测标准”到“真实语料”再到“产品原型”的闭环）：
+
+- 🛡️ **[LLM Medical Eval Framework](https://github.com/MissOrmosia/llm-medical-eval-framework)**：基于真实医疗事故的六模型红队测试框架。包含针对 LLM-as-a-Judge 偏差的《裁判架构与仲裁规范》。
+- 📊 **[HealthBench Localization](https://github.com/MissOrmosia/healthbench-localization)**：对 OpenAI HealthBench 的系统性审计与本土化重构。提出“三大语言学测试”，揭示合成数据的“光滑平面效应”。
+- 🪤 **[Medical Realism Traps](https://github.com/MissOrmosia/medical-realism-traps)**：中国医疗大模型真实世界高保真语料库。包含 56+ 条源自真实临床摩擦力的高保真叙事陷阱（如谎言变体、隐匿急症、病耻感编码）。
+
 ---
 
 ---
@@ -226,3 +236,13 @@ Full changelog: [CHANGELOG.md](CHANGELOG.md).
 1. **Technical Prototype, Not a Medical Device**: This is a pure front-end, single-file HTML demonstration for clinical logic and interaction design. It is **NOT** a clinically validated or regulatory-approved medical device. No real patient health information (PHI) is used, processed, or stored in this repository.
 2. **Not Medical Advice**: All outputs are for reference only and **do not constitute professional medical advice, diagnosis, or treatment**.
 3. **Liability**: Clinicians must independently verify any recommendations. The ultimate responsibility and liability for any clinical decision remain solely with the licensed prescribing physician. The author assumes no legal liability for any direct or indirect consequences arising from the use of this tool.
+
+## 🌐 Explore My Other Works
+
+As an attending surgeon and independent AI researcher, I not only focus on product implementation in specific clinical scenarios (like this analgesic decision support project) but am also dedicated to systematically auditing medical LLM safety from the perspectives of underlying evaluation and adversarial data (red teaming).
+
+Explore my full open-source matrix (they are sister projects that form a closed loop from "evaluation standards" to "real-world corpus" to "product prototypes"):
+
+- 🛡️ **[LLM Medical Eval Framework](https://github.com/MissOrmosia/llm-medical-eval-framework)**: A six-model red-teaming framework based on a real medical malpractice case, including the *Judge Architecture & Arbitration Protocol* to mitigate LLM-as-a-Judge biases.
+- 📊 **[HealthBench Localization](https://github.com/MissOrmosia/healthbench-localization)**: A systematic audit and Chinese-context reconstruction of OpenAI HealthBench, introducing the "Three Linguistic Tests" to reveal the "smooth surface effect" of synthetic data.
+- 🪤 **[Medical Realism Traps](https://github.com/MissOrmosia/medical-realism-traps)**: A high-fidelity stress corpus for Chinese medical LLMs, featuring 56+ narrative traps derived from real-world clinical friction (e.g., lie variants, hidden emergencies, stigma encoding).
